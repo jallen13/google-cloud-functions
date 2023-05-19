@@ -68,11 +68,11 @@ def prep_request_batches(request):
     print('Determining which standard templates to include...')
     standard_extraction_template_list = []
     # If config include all is True then load all standard templates
-    if extract_standard_extraction_templates_dict.get('load_all') is True:
+    if extract_standard_extraction_templates_dict is not None and extract_standard_extraction_templates_dict.get('load_all') is True:
         standard_extraction_template_list = config['data']['standard_extraction_templates']
     else:
         for template in config['data']['standard_extraction_templates']:
-            if extract_standard_extraction_templates_dict.get('include') is not None:
+            if extract_standard_extraction_templates_dict is not None and extract_standard_extraction_templates_dict.get('include') is not None:
                 if template['name'] in extract_standard_extraction_templates_dict.get('include'):
                     standard_extraction_template_list.append(template)
     if standard_extraction_template_list != []:
@@ -83,11 +83,11 @@ def prep_request_batches(request):
     print('Determining which custom templates to include...')
     custom_extraction_template_list = []
     # If config include all is True then load all custom templates
-    if extract_custom_extraction_templates_dict.get('load_all') is True:
+    if extract_custom_extraction_templates_dict is not None and extract_custom_extraction_templates_dict.get('load_all') is True:
         custom_extraction_template_list = config['data']['custom_extraction_templates']
     else:
         for template in config['data']['custom_extraction_templates']:
-            if extract_custom_extraction_templates_dict.get('include') is not None:
+            if extract_custom_extraction_templates_dict is not None and extract_custom_extraction_templates_dict.get('include') is not None:
                 if template['name'] in extract_custom_extraction_templates_dict.get('include'):
                     custom_extraction_template_list.append(template)
     if custom_extraction_template_list != []:
@@ -128,10 +128,10 @@ def prep_request_batches(request):
 
     # Check if the request data included any templates. If not then fail.
     if combined_template_list is None or len(combined_template_list) == 0:
-        print("The request data did not include any templates to load or the requested templates are not valid templats")
+        print("The request data did not include any templates to load or the requested templates are not valid templates")
         return_data = dict()
         return_data['status'] = "Failed"
-        return_data['message'] = "The request data did not include any templates to load or the requested templates are not valid templats"
+        return_data['message'] = "The request data did not include any templates to load or the requested templates are not valid templates"
         return_data['request_data'] = request_data
         return return_data
 
@@ -160,6 +160,9 @@ def prep_request_batches(request):
     results = asyncio.run(async_requests(payload_list))
 
     results['status'] = "Success!"
+    print(f"Data load attempts: {results['data_load_attempts']}")
+    print(f"Data load succeses: {results['data_load_sucesses']}")
+    print(f"Data load failures: {results['data_load_failures']}")
     return results
 
 async def async_requests(payload_list):
@@ -174,7 +177,8 @@ async def async_requests(payload_list):
     successful_data_loads = []
     failed_data_loads = []
     connector = aiohttp.TCPConnector(limit=8)
-    async with aiohttp.ClientSession(connector=connector) as session:
+    timeout = aiohttp.ClientTimeout(total=None, connect=300)
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         try:
             task_results = []
             async with asyncio.TaskGroup() as tg:
@@ -216,7 +220,7 @@ async def aiohttp_request_to_function(session, payload):
         retry = 3
         while response_status is False and retries < retry:
             try:
-                response = await session.post("https://john-test-gaua-6f4hxnffwq-uc.a.run.app", json=payload)
+                response = await session.post("https://ga-ua-extract-data-6f4hxnffwq-uc.a.run.app", json=payload)
                 print(f"Sent a payload to the next function and received a response: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")
                 response_status = response.ok
                 if response_status:
