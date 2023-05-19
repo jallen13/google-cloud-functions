@@ -1,0 +1,5 @@
+README.md
+requirements.in
+test
+auth_files/
+.gcloudignore

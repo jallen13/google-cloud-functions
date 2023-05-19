@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: functions_framework ga_ua_extract_data",
+            "type": "python",
+            "request": "launch",
+            "module": "functions_framework",
+            "args": [
+                "--target",
+                "get_ga_data",
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/ga_ua_extract_data"
+        },
+        {
+            "name": "Python: functions_framework ga_ua_extractions_manager",
+            "type": "python",
+            "request": "launch",
+            "module": "functions_framework",
+            "args": [
+                "--target",
+                "prep_request_batches",
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/ga_ua_extractions_manager",
+            
+        }
+    ]
+}

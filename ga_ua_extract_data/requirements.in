@@ -1,0 +1,4 @@
+functions_framework
+pandas
+google-cloud-storage
+ga-ua-api @ git+https://github.com/jallen13/ga-ua-api.git
