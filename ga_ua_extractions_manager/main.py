@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import os
 import json
+import random
 import calendar
 import asyncio
 
@@ -159,10 +160,10 @@ def prep_request_batches(request):
     print(f"Sending a total of [{len(payload_list)}] payloads to the next function")
     results = asyncio.run(async_requests(payload_list))
 
-    results['status'] = "Success!"
-    print(f"Data load attempts: {results['data_load_attempts']}")
-    print(f"Data load succeses: {results['data_load_sucesses']}")
-    print(f"Data load failures: {results['data_load_failures']}")
+    # results['status'] = "Success!"
+    # print(f"Data load attempts: {results['data_load_attempts']}")
+    # print(f"Data load succeses: {results['data_load_sucesses']}")
+    # print(f"Data load failures: {results['data_load_failures']}")
     return results
 
 async def async_requests(payload_list):
@@ -176,6 +177,7 @@ async def async_requests(payload_list):
     """
     successful_data_loads = []
     failed_data_loads = []
+    rate_limit = AsyncLimiter(60)
     connector = aiohttp.TCPConnector(limit=8)
     timeout = aiohttp.ClientTimeout(total=None, connect=300)
     async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
@@ -183,17 +185,18 @@ async def async_requests(payload_list):
             task_results = []
             async with asyncio.TaskGroup() as tg:
                 for payload in payload_list:
-                    task = tg.create_task(aiohttp_request_to_function(session, payload))
+                    task = tg.create_task(aiohttp_request_to_function(session, rate_limit, payload))
                     task.add_done_callback(task_results.append)
             for task_result in task_results:
                 result = task_result.result()
-                if result is None:
+                try:
+                    result_json = json.loads(result)
+                    if result_json['status'] == "Success":
+                        successful_data_loads.append(result)
+                except json.JSONDecodeError:
                     failed_data_loads.append(result)
-                result_json = json.loads(result)
-                if result_json['status'] == "Success":
-                    successful_data_loads.append(result)
                 else:
-                    failed_data_loads.append(result_json)
+                    failed_data_loads.append(result)
         except ExceptionGroup as excg:
             print(excg.exceptions)
 
@@ -203,17 +206,17 @@ async def async_requests(payload_list):
     return_dict['data_load_failures'] = len(failed_data_loads)
     return return_dict
 
-async def aiohttp_request_to_function(session, payload):
+async def aiohttp_request_to_function(session, rate_limit, payload):
     """Sends a http post request to the next function.
 
     Args:
         session (aiohttp.ClientSession): An active aiohttp client session for making requests
+        rate_limit (aiolimiter.AsyncLimiter): An aiolimiter object setting the rate limit for the number of http requests
         payload (dictionary): The dictionary payload to send in the http request
 
     Returns:
         dictionary: On success, a dictionary of the response text. On failure, a dictionary of why the request failed.
     """
-    rate_limit = AsyncLimiter(600, 60)
     async with rate_limit:
         response_status = False
         retries = 0
@@ -228,7 +231,7 @@ async def aiohttp_request_to_function(session, payload):
                     print(f"Data successfully loaded for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")
                     return response_text
                 print(f"Repsonse status code is {response.status}. Waiting 1 second before retrying request for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")
-                await asyncio.sleep(1)
+                await asyncio.sleep((2 ** retries) + random.random())
                 retries += 1
             except aiohttp.ClientConnectionError as exc:
                 print(f"Exception: {exc}. Waiting 1 second before retrying request for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")

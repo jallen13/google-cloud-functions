@@ -35,6 +35,6 @@ event_data = {
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/workspaces/google-cloud-functions/ga_ua_extractions_manager/auth_files/auth.json'
 # main.prep_request_batches(event_data)
 
-import requests
-response = requests.post("https://ga-ua-extractions-manager-6f4hxnffwq-uc.a.run.app", json=event_data)
-print(response.text)
+# import requests
+# response = requests.post("https://ga-ua-extractions-manager-6f4hxnffwq-uc.a.run.app", json=event_data)
+# print(response.text)

@@ -11,8 +11,8 @@
             "module": "functions_framework",
             "args": [
                 "--target",
-                "get_ga_data",
-                "--debug"
+                "get_ga_data"
+                // "--debug"
             ],
             "cwd": "${workspaceFolder}/ga_ua_extract_data"
         },
@@ -23,10 +23,13 @@
             "module": "functions_framework",
             "args": [
                 "--target",
-                "prep_request_batches",
-                "--debug"
+                "prep_request_batches"
+                // "--debug"
             ],
             "cwd": "${workspaceFolder}/ga_ua_extractions_manager",
+            "env": {
+                "GOOGLE_APPLICATION_CREDENTIALS": "/workspaces/google-cloud-functions/ga_ua_extractions_manager/auth_files/auth.json"
+            }
             
         }
     ]
