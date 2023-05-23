@@ -177,8 +177,11 @@ async def async_requests(payload_list):
     """
     successful_data_loads = []
     failed_data_loads = []
+    # Rate limit http requests to the next function
     rate_limit = AsyncLimiter(60)
+    # Limit the number of concurrent requests to the next function
     connector = aiohttp.TCPConnector(limit=8)
+    # Set a timeout of zero for the client session for the http requests
     timeout = aiohttp.ClientTimeout(total=None, connect=300)
     async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         try:
@@ -193,9 +196,7 @@ async def async_requests(payload_list):
                     result_json = json.loads(result)
                     if result_json['status'] == "Success":
                         successful_data_loads.append(result)
-                except json.JSONDecodeError:
-                    failed_data_loads.append(result)
-                else:
+                except:
                     failed_data_loads.append(result)
         except ExceptionGroup as excg:
             print(excg.exceptions)
@@ -230,8 +231,9 @@ async def aiohttp_request_to_function(session, rate_limit, payload):
                     response_text = await response.text()
                     print(f"Data successfully loaded for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")
                     return response_text
-                print(f"Repsonse status code is {response.status}. Waiting 1 second before retrying request for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")
-                await asyncio.sleep((2 ** retries) + random.random())
+                wait_time = (2 ** retries) + random.random()
+                print(f"Repsonse status code is {response.status}. Waiting {wait_time} seconds before retrying request for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")
+                await asyncio.sleep(wait_time)
                 retries += 1
             except aiohttp.ClientConnectionError as exc:
                 print(f"Exception: {exc}. Waiting 1 second before retrying request for: {payload['name']} for dates of {payload['start_date']} to {payload['end_date']}")

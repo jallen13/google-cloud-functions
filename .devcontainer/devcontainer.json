@@ -10,7 +10,8 @@
 				"ms-python.python",
 				"ms-python.vscode-pylance",
 				"ms-python.pylint",
-				"donjayamanne.python-environment-manager"
+				"donjayamanne.python-environment-manager",
+				"njpwerner.autodocstring"
 			]
 		}
 	}
